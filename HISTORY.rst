@@ -1,7 +1,7 @@
 Changes
 =======
 
-0.9.1dev-perf (unreleased)
+0.9.1dev-perf (2012-11-23)
 --------------------------
 
 - or_values and or_keys for finer control of filter criteria
