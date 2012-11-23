@@ -403,8 +403,6 @@ class LDAPPrincipals(OdictStorage):
           and cfg.attrmap['login'] != cfg.attrmap['id']:
             context._seckey_attrs += (cfg.attrmap['login'],)
         
-        context._load_keys()
-        
         self.expiresAttr = getattr(cfg, 'expiresAttr', None)
         self.expiresUnit = getattr(cfg, 'expiresUnit', None)
         self.principal_attrmap = cfg.attrmap
