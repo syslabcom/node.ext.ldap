@@ -1,9 +1,8 @@
-
 Changes
 =======
 
-0.9.1dev
---------
+0.9.1dev-perf (unreleased)
+--------------------------
 
 - or_values and or_keys for finer control of filter criteria
   [iElectric, chaoflow, 2012-03-24]
