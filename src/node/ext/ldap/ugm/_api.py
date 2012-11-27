@@ -39,6 +39,8 @@ from node.ext.ldap.interfaces import (
     ILDAPGroupsConfig as IGroupsConfig,
     ILDAPUsersConfig as IUsersConfig,
 )
+from node.ext.ldap.filter import LDAPFilter
+from node.ext.ldap.filter import LDAPDictFilter
 from node.ext.ldap.scope import (
     BASE,
     ONELEVEL,
@@ -402,8 +404,13 @@ class LDAPPrincipals(OdictStorage):
         if cfg.attrmap.get('login') \
           and cfg.attrmap['login'] != cfg.attrmap['id']:
             context._seckey_attrs += (cfg.attrmap['login'],)
-        
-        context._load_keys()
+
+        # This is way to expensive, especially if used with
+        # pas.plugins.ldap where a new Users object is created for
+        # every request. So far authenticate was failing, which is now
+        # fixed.
+        #
+        #context._load_keys()
         
         self.expiresAttr = getattr(cfg, 'expiresAttr', None)
         self.expiresUnit = getattr(cfg, 'expiresUnit', None)
@@ -631,9 +638,9 @@ class LDAPUsers(LDAPPrincipals, UgmUsers):
     def authenticate(self, id=None, pw=None):
         # XXX: rename 'id' kw arg to 'login'
         id = decode_utf8(id)
-        id = self.id_for_login(id)
         try:
             if self.expiresAttr:
+                id = self.id_for_login(id)
                 user = self.context[id]
                 expires = user.attrs.get(self.expiresAttr)
                 if expires and expires not in ['99999' '-1']:
@@ -662,7 +669,21 @@ class LDAPUsers(LDAPPrincipals, UgmUsers):
                         return ACCOUNT_EXPIRED
                 userdn = user.DN
             else:
-                userdn = self.context.child_dn(id)
+                _filter = LDAPFilter(self.context.search_filter)
+                _filter &= LDAPDictFilter(self.context.search_criteria)
+                _filter &= "(|(%s=%s)(%s=%s))" % (
+                    self.principal_attrmap['id'], id,
+                    self.principal_attrmap['login'], id)
+                matches = self.context.ldap_session.search(
+                    str(_filter),
+                    self.context.search_scope,
+                    baseDN=self.context.DN,
+                    )
+                try:
+                    userdn = matches[0][0]
+                    id = matches[0][1][self.principal_attrmap['id']][0]
+                except IndexError:
+                    return False
         except KeyError:
             return False
         return self.context.ldap_session.authenticate(userdn, pw) \
