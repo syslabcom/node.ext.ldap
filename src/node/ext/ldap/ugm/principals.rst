@@ -129,6 +129,8 @@ And via LDAPUsers::
 Authenticate a user via LDAPUsers, either by id or by login, but not both. The
 id is returned if sucessful, otherwise None::
 
+    >>> users = Users(props, ucfg)
+
     >>> users.authenticate('wrong', 'creds')
     False
 
