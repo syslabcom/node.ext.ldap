@@ -440,6 +440,8 @@ class LDAPStorage(OdictStorage):
     # This is really ldap
     @default
     def child_dn(self, key):
+        if self._child_dns is None:
+            self._load_keys()
         return self._child_dns[key]
 
     @default
